@@ -17,15 +17,11 @@ export function InventoryPage() {
     setCategoryFilter,
     stockFilter,
     setStockFilter,
-    ratingFilter,
-    setRatingFilter,
     categories,
     addItem,
     updateItem,
     deleteItem,
     toggleStock,
-    usingMockData,
-    error,
   } = useFoodInventory();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -36,26 +32,6 @@ export function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      {/* Mock Data Indicator */}
-      {usingMockData && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-amber-500"></div>
-            <p className="text-sm text-amber-800">
-              <strong>Demo Mode:</strong> Showing sample data with beautiful food images. 
-              Connect to Supabase to see your real inventory.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Error Display */}
-      {error && !usingMockData && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
-      )}
-
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-lg border bg-card p-4 text-center">
@@ -103,21 +79,6 @@ export function InventoryPage() {
               <SelectItem value="out-of-stock">Out of Stock</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Select value={ratingFilter} onValueChange={setRatingFilter}>
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Rating" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Ratings</SelectItem>
-              <SelectItem value="unrated">Unrated</SelectItem>
-              <SelectItem value="5">5 Stars</SelectItem>
-              <SelectItem value="4">4 Stars</SelectItem>
-              <SelectItem value="3">3 Stars</SelectItem>
-              <SelectItem value="2">2 Stars</SelectItem>
-              <SelectItem value="1">1 Star</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -135,7 +96,6 @@ export function InventoryPage() {
               onToggleStock={() => toggleStock(item.id)}
               onEdit={() => setEditingItem(item.id)}
               onDelete={() => deleteItem(item.id)}
-              onRatingChange={(rating) => updateItem(item.id, { rating })}
             />
           ))
         )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,22 +78,12 @@ export function LogMealDialog({ open, onOpenChange, onSave, editingMealLog }: Lo
           carbs: recipe.nutrition.carbs_per_serving,
           fat: recipe.nutrition.fat_per_serving,
         },
-        estimated_cost: recipe.cost_per_serving || 0,
       }));
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.recipe_id) {
-      toast({
-        title: "Missing recipe",
-        description: "Please select a recipe.",
-        variant: "destructive",
-      });
-      return;
-    }
     
     if (!formData.meal_name.trim()) {
       toast({
@@ -132,27 +122,38 @@ export function LogMealDialog({ open, onOpenChange, onSave, editingMealLog }: Lo
       <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingMealLog ? 'Edit Meal' : 'Log a Meal'}</DialogTitle>
-          <DialogDescription>
-            {editingMealLog ? 'Update your meal log entry.' : 'Log a meal from your recipe collection with nutritional information.'}
-          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cost">Cost ($)</Label>
+              <Input
+                id="cost"
+                type="number"
+                value={formData.estimated_cost || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, estimated_cost: parseFloat(e.target.value) || 0 }))}
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="recipe">Recipe *</Label>
+            <Label htmlFor="recipe">Recipe (optional)</Label>
             <Select value={formData.recipe_id} onValueChange={handleRecipeSelect}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a recipe" />
+                <SelectValue placeholder="Select a recipe or leave blank for custom meal" />
               </SelectTrigger>
               <SelectContent>
                 {allRecipes.map(recipe => (
@@ -172,33 +173,64 @@ export function LogMealDialog({ open, onOpenChange, onSave, editingMealLog }: Lo
             />
           </div>
 
-          {/* Nutrition & Cost (Read-only from Recipe) */}
-          {selectedRecipe && (
-            <div className="space-y-3 bg-muted/50 p-3 rounded-md">
-              <Label>Nutrition & Cost (from recipe)</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <span className="font-medium">Calories:</span> {selectedRecipe.nutrition.calories_per_serving.toFixed(1)}
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-medium">Protein:</span> {selectedRecipe.nutrition.protein_per_serving.toFixed(1)}g
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <span className="font-medium">Carbs:</span> {selectedRecipe.nutrition.carbs_per_serving.toFixed(1)}g
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-medium">Fat:</span> {selectedRecipe.nutrition.fat_per_serving.toFixed(1)}g
-                  </div>
-                </div>
+          {/* Nutrition */}
+          <div className="space-y-3">
+            <Label>Nutrition</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="calories" className="text-xs">Calories</Label>
+                <Input
+                  id="calories"
+                  type="number"
+                  value={formData.nutrition.calories || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    nutrition: { ...prev.nutrition, calories: parseInt(e.target.value) || 0 }
+                  }))}
+                  min="0"
+                />
               </div>
-              <div className="text-sm border-t pt-2">
-                <span className="font-medium">Cost per serving:</span> ${(selectedRecipe.cost_per_serving || 0).toFixed(2)}
+              <div>
+                <Label htmlFor="protein" className="text-xs">Protein (g)</Label>
+                <Input
+                  id="protein"
+                  type="number"
+                  value={formData.nutrition.protein || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    nutrition: { ...prev.nutrition, protein: parseInt(e.target.value) || 0 }
+                  }))}
+                  min="0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="carbs" className="text-xs">Carbs (g)</Label>
+                <Input
+                  id="carbs"
+                  type="number"
+                  value={formData.nutrition.carbs || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    nutrition: { ...prev.nutrition, carbs: parseInt(e.target.value) || 0 }
+                  }))}
+                  min="0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="fat" className="text-xs">Fat (g)</Label>
+                <Input
+                  id="fat"
+                  type="number"
+                  value={formData.nutrition.fat || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    nutrition: { ...prev.nutrition, fat: parseInt(e.target.value) || 0 }
+                  }))}
+                  min="0"
+                />
               </div>
             </div>
-          )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>

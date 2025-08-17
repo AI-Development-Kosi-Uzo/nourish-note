@@ -76,19 +76,19 @@ export default function Analytics() {
           <Card className="p-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-lg font-bold">{weeklyNutrition.calories.toFixed(1)}</div>
+                <div className="text-lg font-bold">{weeklyNutrition.calories}</div>
                 <div className="text-sm text-muted-foreground">Total Calories</div>
               </div>
               <div>
-                <div className="text-lg font-bold">{weeklyNutrition.protein.toFixed(1)}g</div>
+                <div className="text-lg font-bold">{weeklyNutrition.protein}g</div>
                 <div className="text-sm text-muted-foreground">Total Protein</div>
               </div>
               <div>
-                <div className="text-lg font-bold">{weeklyNutrition.carbs.toFixed(1)}g</div>
+                <div className="text-lg font-bold">{weeklyNutrition.carbs}g</div>
                 <div className="text-sm text-muted-foreground">Total Carbs</div>
               </div>
               <div>
-                <div className="text-lg font-bold">{weeklyNutrition.fat.toFixed(1)}g</div>
+                <div className="text-lg font-bold">{weeklyNutrition.fat}g</div>
                 <div className="text-sm text-muted-foreground">Total Fat</div>
               </div>
             </div>
