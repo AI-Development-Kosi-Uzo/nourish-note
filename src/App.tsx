@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Recipes from "./pages/Recipes";
 import Meals from "./pages/Meals";
-import Shopping from "./pages/Shopping";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 import Planner from "./pages/Planner";
@@ -19,12 +18,16 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/recipes" element={<Recipes />} />
           <Route path="/meals" element={<Meals />} />
-          <Route path="/shopping" element={<Shopping />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/planner" element={<Planner />} />
           <Route path="/recipe-generator" element={<RecipeGenerator />} />

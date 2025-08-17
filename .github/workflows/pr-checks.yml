@@ -1,0 +1,204 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run TypeScript type checking
+      run: npx tsc --noEmit
+    
+    - name: Run ESLint
+      run: npm run lint
+    
+    - name: Run tests
+      run: npm run test:run
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.node-version }}
+        path: coverage/
+        retention-days: 7
+
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run security audit
+      run: npm audit --audit-level=moderate
+    
+    - name: Check for known vulnerabilities
+      run: npx audit-ci --moderate
+
+  dependency-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v4
+      with:
+        fail-on-severity: moderate
+        allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense
+
+  code-quality:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check package.json scripts
+      run: |
+        echo "Available scripts:"
+        npm run
+        echo "Checking if all required scripts exist..."
+        npm run build > /dev/null 2>&1 || (echo "Build script failed" && exit 1)
+        npm run test:run > /dev/null 2>&1 || (echo "Test script failed" && exit 1)
+        npm run lint > /dev/null 2>&1 || (echo "Lint script failed" && exit 1)
+    
+    - name: Check file structure
+      run: |
+        echo "Checking essential files exist..."
+        [ -f "package.json" ] || (echo "package.json missing" && exit 1)
+        [ -f "tsconfig.json" ] || (echo "tsconfig.json missing" && exit 1)
+        [ -f "vite.config.ts" ] || (echo "vite.config.ts missing" && exit 1)
+        [ -f "src/App.tsx" ] || (echo "src/App.tsx missing" && exit 1)
+        [ -f "src/main.tsx" ] || (echo "src/main.tsx missing" && exit 1)
+        echo "All essential files present ✓"
+
+  build-verification:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Verify build output
+      run: |
+        echo "Checking build output..."
+        [ -d "dist" ] || (echo "dist directory missing" && exit 1)
+        [ -f "dist/index.html" ] || (echo "dist/index.html missing" && exit 1)
+        echo "Build verification passed ✓"
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: dist/
+        retention-days: 1
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [test, security, dependency-review, code-quality, build-verification]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Generate summary
+      run: |
+        echo "## PR Checks Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.test.result }}" == "success" ]; then
+          echo "| ✅ Tests | Passed |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| ❌ Tests | Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.security.result }}" == "success" ]; then
+          echo "| ✅ Security | Passed |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| ❌ Security | Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.dependency-review.result }}" == "success" ]; then
+          echo "| ✅ Dependencies | Passed |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| ❌ Dependencies | Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.code-quality.result }}" == "success" ]; then
+          echo "| ✅ Code Quality | Passed |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| ❌ Code Quality | Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.build-verification.result }}" == "success" ]; then
+          echo "| ✅ Build | Passed |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "| ❌ Build | Failed |" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "All checks completed. Review the logs above for detailed information."

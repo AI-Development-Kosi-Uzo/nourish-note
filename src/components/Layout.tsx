@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Package, ChefHat, BookOpen, ShoppingCart, BarChart3, CalendarDays, Sparkles } from 'lucide-react';
+import { Package, ChefHat, BookOpen, BarChart3, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LayoutProps {
@@ -12,8 +12,6 @@ const navItems = [
   { path: '/recipes', label: 'Recipes', icon: ChefHat },
   { path: '/meals', label: 'Meals', icon: BookOpen },
   { path: '/planner', label: 'Planner', icon: CalendarDays },
-  { path: '/recipe-generator', label: 'Generator', icon: Sparkles },
-  { path: '/shopping', label: 'Shopping', icon: ShoppingCart },
   { path: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
@@ -33,7 +31,7 @@ export function Layout({ children }: LayoutProps) {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-5">
           {navItems.map(({ path, label, icon: Icon }) => {
             const isActive = location.pathname === path;
             return (
