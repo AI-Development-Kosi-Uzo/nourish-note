@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Clock, Users, Edit, ChevronDown, ChevronUp, Heart, Trash2 } from 'lucide-react';
+import { Plus, Search, Clock, Users, Edit, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -8,21 +8,16 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Layout } from '../components/Layout';
 import { AddRecipeDialog } from '../components/AddRecipeDialog';
-import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useRecipes } from '../hooks/useRecipes';
 import { useFoodInventory } from '../hooks/useFoodInventory';
-import { useToast } from '@/hooks/use-toast';
 
 export default function Recipes() {
-  const { recipes, searchQuery, setSearchQuery, addRecipe, updateRecipe, toggleFavorite, deleteRecipe, usingMockData, error } = useRecipes();
+  const { recipes, searchQuery, setSearchQuery, addRecipe, updateRecipe, toggleFavorite } = useRecipes();
   const { allItems } = useFoodInventory();
-  const { toast } = useToast();
-
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<string | null>(null);
   const [expandedRecipes, setExpandedRecipes] = useState<Set<string>>(new Set());
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; recipe: any }>({ open: false, recipe: null });
 
   const displayedRecipes = (favoritesOnly ? recipes.filter(r => r.is_favorite) : recipes);
   const toggleRecipeExpansion = (recipeId: string) => {
@@ -42,24 +37,6 @@ export default function Recipes() {
     setIsAddDialogOpen(true);
   };
 
-  const handleDeleteRecipe = async () => {
-    if (!deleteConfirm.recipe) return;
-    
-    try {
-      await deleteRecipe(deleteConfirm.recipe.id);
-      toast({
-        title: 'Recipe deleted',
-        description: `${deleteConfirm.recipe.name} has been deleted successfully.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete recipe. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
-
   return (
     <Layout>
       <div className="space-y-6">
@@ -67,47 +44,6 @@ export default function Recipes() {
         <div>
 <h1 className="text-2xl font-bold">Recipes</h1>
            <p className="text-muted-foreground">Manage your recipes and favorites</p>
-        </div>
-
-        {/* Mock Data Indicator */}
-        {usingMockData && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-amber-500"></div>
-              <p className="text-sm text-amber-800">
-                <strong>Demo Mode:</strong> Showing sample recipes with beautiful food images. 
-                Connect to Supabase to see your real recipes.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Error Display */}
-        {error && !usingMockData && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-            <p className="text-sm text-red-800">{error}</p>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-lg border bg-card p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{recipes.length}</div>
-            <div className="text-sm text-muted-foreground">Total Recipes</div>
-          </div>
-          <div className="rounded-lg border bg-card p-4 text-center">
-            <div className="text-2xl font-bold text-pink-600">{recipes.filter(r => r.is_favorite).length}</div>
-            <div className="text-sm text-muted-foreground">Favorites</div>
-          </div>
-          <div className="rounded-lg border bg-card p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {recipes.length > 0 
-                ? Math.round(recipes.reduce((sum, r) => sum + (r.prep_time_minutes || 0), 0) / recipes.length)
-                : 0
-              }
-            </div>
-            <div className="text-sm text-muted-foreground">Avg Prep Time (min)</div>
-          </div>
         </div>
 
         {/* Search */}
@@ -175,14 +111,6 @@ export default function Recipes() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setDeleteConfirm({ open: true, recipe })}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => toggleRecipeExpansion(recipe.id)}
                       >
                         {expandedRecipes.has(recipe.id) ? (
@@ -197,22 +125,17 @@ export default function Recipes() {
                   {/* Nutrition per serving */}
                   <div className="flex gap-4 text-xs">
                     <Badge variant="secondary">
-                      {recipe.nutrition.calories_per_serving.toFixed(1)} cal
+                      {recipe.nutrition.calories_per_serving} cal
                     </Badge>
                     <span className="text-muted-foreground">
-                      P: {recipe.nutrition.protein_per_serving.toFixed(1)}g
+                      P: {recipe.nutrition.protein_per_serving}g
                     </span>
                     <span className="text-muted-foreground">
-                      C: {recipe.nutrition.carbs_per_serving.toFixed(1)}g
+                      C: {recipe.nutrition.carbs_per_serving}g
                     </span>
                     <span className="text-muted-foreground">
-                      F: {recipe.nutrition.fat_per_serving.toFixed(1)}g
+                      F: {recipe.nutrition.fat_per_serving}g
                     </span>
-                    {recipe.cost_per_serving && (
-                      <Badge variant="outline" className="text-green-600 border-green-600">
-                        ${recipe.cost_per_serving.toFixed(2)}/serving
-                      </Badge>
-                    )}
                   </div>
 
                   {/* Ingredients list */}
@@ -280,17 +203,6 @@ export default function Recipes() {
             setEditingRecipe(null);
           }}
           editingRecipe={editingRecipe ? recipes.find(r => r.id === editingRecipe) : undefined}
-        />
-
-        {/* Delete Confirmation Dialog */}
-        <ConfirmDialog
-          open={deleteConfirm.open}
-          onOpenChange={(open) => setDeleteConfirm({ open, recipe: open ? deleteConfirm.recipe : null })}
-          title="Delete Recipe"
-          description={`Are you sure you want to delete "${deleteConfirm.recipe?.name}"? This action cannot be undone.`}
-          onConfirm={handleDeleteRecipe}
-          confirmText="Delete"
-          variant="destructive"
         />
       </div>
     </Layout>

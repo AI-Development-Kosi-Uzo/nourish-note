@@ -3,27 +3,19 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Layout } from '../components/Layout';
-import { useShoppingList } from '../hooks/useShoppingList';
+import { useFoodInventory } from '../hooks/useFoodInventory';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Shopping() {
-  const { shoppingItems, summary, markAsPurchased, getItemTotal } = useShoppingList();
+  const { outOfStockItems, updateItem } = useFoodInventory();
   const { toast } = useToast();
 
-  const handleMarkAsPurchased = async (item: typeof shoppingItems[0]) => {
-    try {
-      const result = await markAsPurchased(item);
-      toast({
-        title: "Item purchased",
-        description: `${result.name} has been moved back to inventory with ${result.quantity} ${result.unit}.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to mark item as purchased.",
-        variant: "destructive",
-      });
-    }
+  const markAsPurchased = (itemId: string) => {
+    updateItem(itemId, { in_stock: true, quantity: 1 });
+    toast({
+      title: "Item purchased",
+      description: "Item has been moved back to inventory.",
+    });
   };
 
   return (
@@ -36,30 +28,20 @@ export default function Shopping() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">{summary.totalItems}</div>
-            <div className="text-sm text-muted-foreground">Items to buy</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{summary.totalUnits}</div>
-            <div className="text-sm text-muted-foreground">Total units</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">${summary.estimatedTotal.toFixed(2)}</div>
-            <div className="text-sm text-muted-foreground">Estimated total</div>
-          </Card>
-        </div>
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-bold text-orange-600">{outOfStockItems.length}</div>
+          <div className="text-sm text-muted-foreground">Items to buy</div>
+        </Card>
 
         {/* Shopping List */}
         <div className="space-y-3">
-          {shoppingItems.length === 0 ? (
+          {outOfStockItems.length === 0 ? (
             <div className="text-center py-8">
               <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
               <p className="text-muted-foreground">All items are in stock!</p>
             </div>
           ) : (
-            shoppingItems.map(item => (
+            outOfStockItems.map(item => (
               <Card key={item.id} className="p-4">
                 <div className="flex items-center gap-4">
                   {/* Image */}
@@ -87,18 +69,10 @@ export default function Shopping() {
                       <Badge variant="secondary" className="text-xs">
                         {item.category}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {item.quantity} {item.unit}
-                      </span>
                       {item.price && (
-                        <>
-                          <span className="text-sm text-muted-foreground">
-                            ${item.price.toFixed(2)} each
-                          </span>
-                          <span className="text-sm font-medium text-green-600">
-                            ${getItemTotal(item).toFixed(2)} total
-                          </span>
-                        </>
+                        <span className="text-sm text-muted-foreground">
+                          ${item.price.toFixed(2)}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -106,7 +80,7 @@ export default function Shopping() {
                   {/* Mark as purchased button */}
                   <Button
                     size="sm"
-                    onClick={() => handleMarkAsPurchased(item)}
+                    onClick={() => markAsPurchased(item.id)}
                     className="flex-shrink-0"
                   >
                     <Check className="h-4 w-4 mr-1" />
@@ -118,28 +92,15 @@ export default function Shopping() {
           )}
         </div>
 
-        {/* Shopping Summary */}
-        {shoppingItems.length > 0 && (
-          <Card className="p-4 space-y-3">
-            <div className="flex justify-between text-sm">
-              <span>Items to buy:</span>
-              <span>{summary.totalItems}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Total units:</span>
-              <span>{summary.totalUnits}</span>
-            </div>
-            <div className="border-t pt-3 flex justify-between items-center">
+        {/* Estimated Total */}
+        {outOfStockItems.length > 0 && (
+          <Card className="p-4">
+            <div className="flex justify-between items-center">
               <span className="font-medium">Estimated Total:</span>
-              <span className="text-lg font-bold text-green-600">
-                ${summary.estimatedTotal.toFixed(2)}
+              <span className="text-lg font-bold">
+                ${outOfStockItems.reduce((total, item) => total + (item.price || 0), 0).toFixed(2)}
               </span>
             </div>
-            {summary.itemsWithoutPrices > 0 && (
-              <p className="text-xs text-muted-foreground">
-                * {summary.itemsWithoutPrices} item{summary.itemsWithoutPrices > 1 ? 's' : ''} without prices - actual total may vary
-              </p>
-            )}
           </Card>
         )}
       </div>
